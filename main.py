@@ -1,3 +1,5 @@
+import sys
+import glob
 import pygame
 import math
 import random
@@ -6,13 +8,16 @@ from enum import Enum
 
 #setup
 pygame.init()
-screen = pygame.display.set_mode((1280, 720))
-pygame.display.set_caption('Horse Race')
+screen_width = 1280
+screen_height = 720
+screen = pygame.display.set_mode((screen_width, screen_height))
+pygame.display.set_caption('horseracetest')
 clock = pygame.time.Clock()
 running = True
 arena_background_image = pygame.image.load('graphics/arena.png')
-arena_mask_image = pygame.mask.from_surface(arena_background_image)
-game_speed = 2
+arena_mask_image = pygame.mask.from_surface(pygame.image.load('graphics/arena_mask.png'))
+
+game_speed = 100
 
 class GameState(Enum):
     MENU = 0
@@ -20,6 +25,7 @@ class GameState(Enum):
     VICTORY = 2
 
 game_state = GameState.MENU
+winner = None
 
 class Horse:
     def __init__(self, name, sprite, x, y, scale, direction):
@@ -65,14 +71,46 @@ class Horse:
         self.x = new_x
         self.y = new_y
 
+class Reward:
+    def __init__(self, sprite, x, y, scale):
+        self.sprite = sprite
+        self.x = x
+        self.y = y
+        self.scale = scale
+        self.mask = pygame.mask.from_surface(sprite)
+
+    def draw(self, screen):
+        screen.blit(self.sprite, (self.x, self.y))
+
+    def rewardCheck(self):
+        #other horses collision check
+        for other in horses:
+            offset = ((other.x-self.x), (other.y-self.y))
+            if self.mask.overlap(other.mask, offset):
+                global game_state
+                global winner
+                winner = other.name
+
+                game_state = GameState.VICTORY
+                print('winner is ' + str(winner))
+                return
+
 
 #spawn horses
 horse_image = pygame.image.load('graphics/horse.png')
-horse = Horse(name="Horse",sprite=horse_image,x=100,y=100,scale=1,direction=180)
-horse_image = pygame.image.load('graphics/horse.png')
-horse2 = Horse(name="Horse",sprite=horse_image,x=600,y=100,scale=1,direction=0)
-
+horse = Horse(name="GOREPLUSH VELLUMGRAVE",sprite=horse_image,x=100,y=100,scale=1,direction=180)
+horse_image = pygame.image.load('graphics/horse2.png')
+horse2 = Horse(name="WHITE [censored]",sprite=horse_image,x=600,y=100,scale=1,direction=0)
+#horse count
 horses = [horse, horse2]
+
+#victory screen
+victory_image = pygame.image.load('graphics/victory.png')
+
+#spawn reward
+reward_image = pygame.image.load('graphics/reward.png')
+reward = Reward(sprite=reward_image,x=1070,y=70,scale=1)
+
 
 #step
 while running:
@@ -85,12 +123,85 @@ while running:
     screen.fill((0,0,0))
     screen.blit(arena_background_image, (0, 0))
 
-    #horse
-    horse.move(game_speed)
-    horse2.move(game_speed)
+    if game_state == GameState.MENU:
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    game_state = GameState.RACING
+                    game_time = 0
+                    victory_animation = 0
+
+        pass
+
+    if game_state == GameState.RACING:
+        #horse
+        horse.move(game_speed)
+        horse2.move(game_speed)
+        reward.rewardCheck()
+        if game_time == 0:
+            pygame.mixer.init()
+            track_list = glob.glob('tracklist/*.mp3')
+            track = random.choice(track_list)
+            pygame.mixer.music.load(track)
+            pygame.mixer.music.set_volume(.5)
+            pygame.mixer.music.play()
+        game_time+=1
+
+
+    #draw
     horse.draw(screen)
     horse2.draw(screen)
 
+    reward.draw(screen)
+
+    if game_state == GameState.VICTORY:
+        if victory_animation == 0:
+            pygame.mixer.init()
+            track_list = glob.glob('sounds/victory*.mp3')
+            track = random.choice(track_list)
+            pygame.mixer.music.load(track)
+            pygame.mixer.music.set_volume(.2)
+            pygame.mixer.music.play()
+
+
+        image_scale = victory_animation/100
+        if image_scale > 1: image_scale = 1
+
+        image = pygame.transform.scale_by(victory_image, image_scale)
+        screen.blit(image, (screen_width/2-image.get_width()/2, screen_height/2-image.get_height()/2))
+
+        def draw_winner_text (text, font, scale, max_width):
+            #split long names
+            words = text.split()
+            lines = []
+            current_line = ''
+
+            for word in words:
+                test_line = current_line + word + ' '
+                if font.size(test_line)[0] <= max_width:
+                    current_line = test_line
+                else:
+                    lines.append(current_line)
+                    current_line = word + ' '
+            if current_line:
+                lines.append(current_line)
+
+            rendered_lines = [font.render(line.strip(),True,(255,255,255)) for line in lines]
+
+
+
+            #font = pygame.font.Font(None, int(84*1.5))
+            winner_image = font.render(winner, True, (255, 255, 255))
+            image = pygame.transform.scale_by(winner_image, image_scale)
+            screen.blit(image, (screen_width/2-image.get_width()/2, screen_height-100-image.get_height()/2))
+
+        #draw_winner_text(text=winner,font=None,scale=image_scale,max_width=screen_width)
+
+        victory_animation += 1
+
+
+
+        pass
 
     pygame.display.update()
     clock.tick(60)
