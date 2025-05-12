@@ -176,6 +176,7 @@ while running:
             lines = []
             current_line = ''
 
+            #split text into multiple lines within max_width
             for word in words:
                 test_line = current_line + word + ' '
                 if font.size(test_line)[0] <= max_width:
@@ -186,16 +187,27 @@ while running:
             if current_line:
                 lines.append(current_line)
 
+            #render each line
             rendered_lines = [font.render(line.strip(),True,(255,255,255)) for line in lines]
+            line_height = font.get_linesize()*scale
+            total_height = line_height * len(rendered_lines)
 
+            #vertical center starting point
+            y_offset = screen_height - total_height/2
 
+            #render everything
+            for i, line_surface in enumerate(rendered_lines):
+                scaled_surface = pygame.transform.scale_by(line_surface,scale)
+                x=screen_width/2 - scaled_surface.get_width()/2
+                y=(y_offset+i*line_height - total_height/2) - 20
+                screen.blit(scaled_surface, (x, y))
 
-            #font = pygame.font.Font(None, int(84*1.5))
-            winner_image = font.render(winner, True, (255, 255, 255))
-            image = pygame.transform.scale_by(winner_image, image_scale)
-            screen.blit(image, (screen_width/2-image.get_width()/2, screen_height-100-image.get_height()/2))
-
-        #draw_winner_text(text=winner,font=None,scale=image_scale,max_width=screen_width)
+        draw_winner_text(
+            text=winner,
+            font=pygame.font.SysFont('Arial',24*4),
+            scale=image_scale,
+            max_width=screen_width-100
+        )
 
         victory_animation += 1
 
