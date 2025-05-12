@@ -6,6 +6,7 @@ import random
 from sys import exit
 from enum import Enum
 
+
 #setup
 pygame.init()
 screen_width = 1280
@@ -95,6 +96,55 @@ class Reward:
                 print('winner is ' + str(winner))
                 return
 
+class VAlign(Enum):
+    TOP = 0
+    MIDDLE = 1
+    BOTTOM = 2
+
+class HAlign(Enum):
+    LEFT = 0
+    MIDDLE = 1
+    RIGHT = 2
+
+
+def draw_text(text, x, y, halign, valign, font, scale, max_width):
+    # split long names
+    words = text.split()
+    lines = []
+    current_line = ''
+
+    # split text into multiple lines within max_width
+    for word in words:
+        test_line = current_line + word + ' '
+        if font.size(test_line)[0] <= max_width:
+            current_line = test_line
+        else:
+            lines.append(current_line)
+            current_line = word + ' '
+    if current_line:
+        lines.append(current_line)
+
+    # render each line
+    rendered_lines = [font.render(line.strip(), True, (255, 255, 255)) for line in lines]
+    line_height = font.get_linesize() * scale
+    total_height = line_height * len(rendered_lines)
+
+    # vertical center starting point
+    # y_offset = screen_height - total_height/2
+
+    # render everything
+    for i, line_surface in enumerate(rendered_lines):
+        scaled_surface = pygame.transform.scale_by(line_surface, scale)
+        if halign == HAlign.LEFT: _x = x
+        if halign == HAlign.MIDDLE: _x = x - scaled_surface.get_width() / 2
+        if halign == HAlign.RIGHT: _x = x - scaled_surface.get_width()
+
+        if valign == VAlign.TOP: _y = (y + i * line_height)
+        if valign == VAlign.MIDDLE: _y = (y + i * line_height - total_height / 2)
+        if valign == VAlign.BOTTOM: _y = (y + i * line_height - total_height)
+
+        screen.blit(scaled_surface, (_x, _y))
+
 
 #spawn horses
 horse_image = pygame.image.load('graphics/horse.png')
@@ -170,40 +220,13 @@ while running:
         image = pygame.transform.scale_by(victory_image, image_scale)
         screen.blit(image, (screen_width/2-image.get_width()/2, screen_height/2-image.get_height()/2))
 
-        def draw_winner_text (text, font, scale, max_width):
-            #split long names
-            words = text.split()
-            lines = []
-            current_line = ''
 
-            #split text into multiple lines within max_width
-            for word in words:
-                test_line = current_line + word + ' '
-                if font.size(test_line)[0] <= max_width:
-                    current_line = test_line
-                else:
-                    lines.append(current_line)
-                    current_line = word + ' '
-            if current_line:
-                lines.append(current_line)
-
-            #render each line
-            rendered_lines = [font.render(line.strip(),True,(255,255,255)) for line in lines]
-            line_height = font.get_linesize()*scale
-            total_height = line_height * len(rendered_lines)
-
-            #vertical center starting point
-            y_offset = screen_height - total_height/2
-
-            #render everything
-            for i, line_surface in enumerate(rendered_lines):
-                scaled_surface = pygame.transform.scale_by(line_surface,scale)
-                x=screen_width/2 - scaled_surface.get_width()/2
-                y=(y_offset+i*line_height - total_height/2) - 20
-                screen.blit(scaled_surface, (x, y))
-
-        draw_winner_text(
+        draw_text(
             text=winner,
+            x = screen_width/2,
+            y = screen_height-20,
+            halign = HAlign.MIDDLE,
+            valign = VAlign.BOTTOM,
             font=pygame.font.SysFont('Arial',24*4),
             scale=image_scale,
             max_width=screen_width-100
@@ -211,6 +234,8 @@ while running:
 
         victory_animation += 1
 
+        if victory_animation > 100:
+            pass
 
 
         pass
