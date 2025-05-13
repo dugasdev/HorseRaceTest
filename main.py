@@ -18,7 +18,7 @@ running = True
 arena_background_image = pygame.image.load('graphics/arena.png')
 arena_mask_image = pygame.mask.from_surface(pygame.image.load('graphics/arena_mask.png'))
 
-game_speed = 100
+game_speed = 5
 
 class GameState(Enum):
     MENU = 0
