@@ -1,3 +1,6 @@
 *.html linguist-documentation
 *.css linguist-documentation
 *.js linguist-documentation
+*.tex linguist-documentation
+*.sty linguist-documentation
+*.cls linguist-documentation
