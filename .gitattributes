@@ -4,4 +4,5 @@
 *.tex linguist-documentation
 *.sty linguist-documentation
 *.cls linguist-documentation
+*.toc linguist-documentation
 *.py linguist-language=Python
